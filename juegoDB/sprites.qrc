@@ -1,5 +1,12 @@
 <RCC>
     <qresource prefix="/">
         <file>sprites/fondo.jpg</file>
+        <file>sprites/cueva_fondo.jpg</file>
+        <file>sprites/roca.png</file>
+        <file>sprites/sprites_goku.png</file>
+        <file>sprites/goku_corriendo.png</file>
+        <file>sprites/goku_corriendo_izq.png</file>
+        <file>sprites/ganaste.png</file>
+        <file>sprites/perdiste.png</file>
     </qresource>
 </RCC>

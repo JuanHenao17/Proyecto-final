@@ -51,8 +51,19 @@ MainWindow::MainWindow(QWidget *parent)
     menuWidget->setLayout(vLayout);
     setCentralWidget(menuWidget);
 
-    //connect(btnIniciar, &QPushButton::clicked, this, &MainWindow::iniciarJuego);
+    connect(btnIniciar, &QPushButton::clicked, this, &MainWindow::iniciarJuego);
     connect(btnSalir, &QPushButton::clicked, this, &MainWindow::salir);
+}
+
+void MainWindow::iniciarJuego() {
+
+    view = new QGraphicsView();
+    view->setFixedSize(1280, 720);
+    setCentralWidget(view);
+
+    juego = new Juego(view, this);
+    juego->iniciarNivel1();  // o iniciarNivel2();
+
 }
 
 

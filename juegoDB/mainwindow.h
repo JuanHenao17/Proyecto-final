@@ -5,6 +5,7 @@
 #include <QGraphicsView>
 #include <QGraphicsScene>
 #include <QTimer>
+#include "juego.h"
 
 class MainWindow : public QMainWindow
 {
@@ -16,10 +17,13 @@ public:
 
 private slots:
 
-    //void iniciarJuego();
+    void iniciarJuego();
     void salir();
 
 private:
+
+    QGraphicsView* view;
+    Juego* juego;
 
     QWidget* menuWidget;
     QPushButton* btnIniciar;
