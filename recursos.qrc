@@ -1,0 +1,15 @@
+<RCC>
+    <qresource prefix="/imagenes">
+        <file>imagenes/cueva_fondo.jpg</file>
+        <file>imagenes/roca.png</file>
+        <file>imagenes/fondo.jpg</file>
+        <file>imagenes/ganaste.png</file>
+        <file>imagenes/perdiste.png</file>
+        <file>imagenes/goku_corriendo.png</file>
+        <file>imagenes/goku_corriendo_izq.png</file>
+        <file>imagenes/goku_saltando.png</file>
+        <file>imagenes/barra_vida_roja.png</file>
+        <file>imagenes/marco_vida.png</file>
+        <file>imagenes/placa_tiempo.png</file>
+    </qresource>
+</RCC>

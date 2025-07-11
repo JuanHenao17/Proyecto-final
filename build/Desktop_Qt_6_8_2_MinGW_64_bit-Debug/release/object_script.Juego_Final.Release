@@ -1,0 +1,10 @@
+release/juego.o
+release/main.o
+release/MainWindow.o
+release/Goku.o
+release/Roca.o
+release/personaje.o
+release/qrc_recursos.o
+release/moc_MainWindow.o
+release/moc_juego.o
+release/moc_personaje.o
