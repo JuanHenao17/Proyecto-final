@@ -12,4 +12,9 @@
         <file>imagenes/marco_vida.png</file>
         <file>imagenes/placa_tiempo.png</file>
     </qresource>
+
+
+    <qresource prefix="/fuentes">
+        <file>fuentes/PressStart.ttf</file>
+    </qresource>
 </RCC>

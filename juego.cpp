@@ -2,11 +2,12 @@
 #include "roca.h"
 #include <QGraphicsPixmapItem>
 #include <QRandomGenerator>
+#include <QFontDatabase>
 #include <QFont>
 #include <QDebug>
 
 Juego::Juego(QGraphicsView* view, QObject* parent)
-    : QObject(parent), view(view), scene(nullptr), timer(nullptr)/*, goku(nullptr)*/,
+    : QObject(parent), view(view), scene(nullptr), timer(nullptr),
     vidaBar(nullptr), tiempoText(nullptr), tiempoRestante(0), nivelActual(1) {}
 
 void Juego::limpiarEscena() {
@@ -26,53 +27,104 @@ void Juego::limpiarEscena() {
     }
 }
 
-void Juego::iniciarNivel1(){
-
+void Juego::iniciarNivel1() {
     limpiarEscena();
     scene = new QGraphicsScene();
     scene->setSceneRect(0, 0, 1280, 720);
 
-    // Fondo de la cueva
+    // Fondo
     QPixmap fondoPixmap(":/imagenes/imagenes/cueva_fondo.jpg");
-
     QGraphicsPixmapItem* fondo = new QGraphicsPixmapItem(fondoPixmap.scaled(1280, 720));
-    scene->addItem(fondo);
     fondo->setZValue(-1);
+    scene->addItem(fondo);
 
     // Goku
     goku = new Goku();
     goku->setPos(640, 550);
     scene->addItem(goku);
 
-    // Barra de vida
-    vidaBar = new QGraphicsRectItem(0, 0, goku->getVida() * 5, 30);
+    // Fuente más grande
+    int fontId = QFontDatabase::addApplicationFont(":/fuentes/fuentes/PressStart.ttf");
+    QString fontFamily = QFontDatabase::applicationFontFamilies(fontId).at(0);
+    QFont fuentePixel(fontFamily, 20);  // Aumentado de 12 a 16
+
+    // Posición centrada de la barra de vida
+    int barraAncho = 200;
+    int barraX = (1280 - barraAncho) / 2; // 540
+
+    // Marco de vida
+    QGraphicsRectItem* marcoVida = new QGraphicsRectItem(0, 0, barraAncho, 20);
+    marcoVida->setBrush(Qt::black);
+    marcoVida->setPen(QPen(Qt::lightGray, 2));
+    marcoVida->setPos(barraX, 13);
+    marcoVida->setZValue(1);
+    scene->addItem(marcoVida);
+
+    // Barra de vida roja
+    vidaBar = new QGraphicsRectItem(0, 0, goku->getVida() * 2, 20);
     vidaBar->setBrush(Qt::red);
-    vidaBar->setPos(20, 20);
+    vidaBar->setPos(barraX, 14);
+    vidaBar->setZValue(2);
     scene->addItem(vidaBar);
 
-    // Contador de tiempo
-    tiempoRestante = 90;  // 2 minutos
-    tiempoText = new QGraphicsTextItem();
-    tiempoText->setPlainText("Tiempo: 90");
+    // Texto centrado arriba de la barra
+    sombraNombre = new QGraphicsTextItem("GOKU   LVL   1");
+    sombraNombre->setFont(fuentePixel);
+    sombraNombre->setDefaultTextColor(Qt::black);
+    sombraNombre->setPos(10, 6);
+    sombraNombre->setZValue(3);
+    scene->addItem(sombraNombre);
+
+    textoNombre = new QGraphicsTextItem("GOKU   LVL   1");
+    textoNombre->setFont(fuentePixel);
+    textoNombre->setDefaultTextColor(Qt::white);
+    textoNombre->setPos(11, 10);
+    textoNombre->setZValue(4);
+    scene->addItem(textoNombre);
+
+    // Vida numérica a la derecha de la barra
+    sombraVida = new QGraphicsTextItem("100/100");
+    sombraVida->setFont(fuentePixel);
+    sombraVida->setDefaultTextColor(Qt::black);
+    sombraVida->setPos(barraX + barraAncho + 11, 6);
+    sombraVida->setZValue(3);
+    scene->addItem(sombraVida);
+
+    textoVida = new QGraphicsTextItem("100/100");
+    textoVida->setFont(fuentePixel);
+    textoVida->setDefaultTextColor(Qt::white);
+    textoVida->setPos(barraX + barraAncho + 10, 11);
+    textoVida->setZValue(4);
+    scene->addItem(textoVida);
+
+    // Tiempo (mantiene su posición en esquina superior derecha)
+    tiempoRestante = 90;
+
+    sombraTiempo = new QGraphicsTextItem("TIEMPO: 90");
+    sombraTiempo->setFont(fuentePixel);
+    sombraTiempo->setDefaultTextColor(Qt::black);
+    sombraTiempo->setPos(1000, 11);
+    sombraTiempo->setZValue(3);
+    scene->addItem(sombraTiempo);
+
+    tiempoText = new QGraphicsTextItem("TIEMPO: 90");
+    tiempoText->setFont(fuentePixel);
     tiempoText->setDefaultTextColor(Qt::white);
-    tiempoText->setFont(QFont("Arial", 20));
-    tiempoText->setPos(20, 60);
+    tiempoText->setPos(1000, 14);
+    tiempoText->setZValue(4);
     scene->addItem(tiempoText);
 
+    // Escena y timer
     view->setScene(scene);
     view->setFixedSize(1280, 720);
     view->setFocus();
-
-    // Instalar filtro de eventos para detectar ENTER
     scene->installEventFilter(this);
-
-    nivelTerminado = false;  // Reinicia flag
+    nivelTerminado = false;
 
     timer = new QTimer(this);
     connect(timer, &QTimer::timeout, [&]() {
         goku->aplicarFisica();
 
-        // Crear roca aleatoria
         if (QRandomGenerator::global()->bounded(30) == 0) {
             Roca* roca = new Roca();
             roca->setPos(QRandomGenerator::global()->bounded(1280), 0);
@@ -91,32 +143,38 @@ void Juego::iniciarNivel1(){
                     goku->restarVida(20);
                     scene->removeItem(roca);
                     delete roca;
+
+                    int vidaActual = goku->getVida();
+                    textoVida->setPlainText(QString::number(vidaActual) + "/100");
+                    sombraVida->setPlainText(QString::number(vidaActual) + "/100");
                 }
             }
         }
 
-        vidaBar->setRect(0, 0, goku->getVida() * 5, 30);
+        // Actualizar barra de vida
+        vidaBar->setRect(0, 0, goku->getVida() * 2, 20);
 
-        // Contador de tiempo
+        // Actualizar tiempo
         static int contadorFrame = 0;
         contadorFrame++;
         if (contadorFrame >= 33) {
             tiempoRestante--;
-            tiempoText->setPlainText("Tiempo: " + QString::number(tiempoRestante));
+            QString tiempoStr = "TIEMPO " + QString::number(tiempoRestante);
+            tiempoText->setPlainText(tiempoStr);
+            sombraTiempo->setPlainText(tiempoStr);
             contadorFrame = 0;
 
             if (tiempoRestante <= 0) {
                 timer->stop();
                 nivelTerminado = true;
 
-                // Elimina texto antiguo si quieres
                 scene->removeItem(tiempoText);
+                scene->removeItem(sombraTiempo);
                 delete tiempoText;
+                delete sombraTiempo;
 
-                // Muestra imagen de GANASTE
                 QGraphicsPixmapItem* ganasteImg = new QGraphicsPixmapItem(
-                    QPixmap(":/imagenes/imagenes/ganaste.png").scaled(400, 400)
-                    );
+                    QPixmap(":/imagenes/imagenes/ganaste.png").scaled(400, 400));
                 ganasteImg->setPos(440, 150);
                 scene->addItem(ganasteImg);
             }
@@ -127,12 +185,10 @@ void Juego::iniciarNivel1(){
             nivelTerminado = true;
 
             QGraphicsPixmapItem* perdisteImg = new QGraphicsPixmapItem(
-                QPixmap(":/imagenes/imagenes/perdiste.png").scaled(400, 400)
-                );
+                QPixmap(":/imagenes/imagenes/perdiste.png").scaled(400, 400));
             perdisteImg->setPos(440, 150);
             scene->addItem(perdisteImg);
         }
-
     });
 
     timer->start(30);
@@ -143,7 +199,7 @@ bool Juego::eventFilter(QObject* obj, QEvent* event) {
         QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
         if (keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter) {
             iniciarNivel1();
-            return true;  // Evento manejado
+            return true;
         }
     }
     return QObject::eventFilter(obj, event);
