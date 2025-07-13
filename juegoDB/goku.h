@@ -22,14 +22,20 @@ private:
     int spriteAncho = 68;
     int spriteAlto = 86;
     QPixmap hojaSprites1;
+
     QPixmap hojaSprites2;
     QPixmap sprite;
+    QPixmap spriteSaltoDerecha;
+    QPixmap spriteSaltoIzquierda;
+
     int cont=0;
 
     int velocidadY;
     bool enElAire;
     bool moviendoIzq = false;
     bool moviendoDer = false;
+    bool mirandoDerecha = true;
+    bool isOpaque() const;
 };
 
 #endif // GOKU_H

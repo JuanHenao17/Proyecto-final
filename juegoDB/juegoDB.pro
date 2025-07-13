@@ -9,18 +9,24 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    enemigo.cpp \
     goku.cpp \
     juego.cpp \
     main.cpp \
     mainwindow.cpp \
+    obstaculo.cpp \
     personaje.cpp \
+    proyectil.cpp \
     roca.cpp
 
 HEADERS += \
+    enemigo.h \
     goku.h \
     juego.h \
     mainwindow.h \
+    obstaculo.h \
     personaje.h \
+    proyectil.h \
     roca.h
 
 

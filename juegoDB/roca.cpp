@@ -1,9 +1,10 @@
 #include "roca.h"
 
 Roca::Roca() {
-    setPixmap(QPixmap(":/sprites/roca.png").scaled(110, 110));
+    setPixmap(QPixmap(":/sprites/roca.png").scaled(120, 120));
+    velocidad = 25;
 }
 
 void Roca::mover() {
-    setY(y() + 25);  // Velocidad de caída
+    setY(y() + velocidad);
 }

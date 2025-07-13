@@ -1,12 +1,14 @@
 #ifndef ROCA_H
 #define ROCA_H
 
-#include <QGraphicsPixmapItem>
+#include "obstaculo.h"
 
-class Roca : public QGraphicsPixmapItem {
+class Roca : public Obstaculo {
+    Q_OBJECT
+
 public:
     Roca();
-    void mover();
+    void mover() override;
 };
 
-#endif
+#endif // ROCA_H

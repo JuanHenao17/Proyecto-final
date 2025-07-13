@@ -21,8 +21,12 @@ public:
     int getVelocidad() const;
 
 protected:
+
     int vida;
     int velocidad;
+    bool inmune = false;
+    QTimer* timerInmunidad;
+    QTimer* timerParpadeo;
 };
 
 #endif // PERSONAJE_H

@@ -1,4 +1,5 @@
 #include "personaje.h"
+#include "qtimer.h"
 
 Personaje::Personaje() {
     vida = 100;
@@ -14,8 +15,14 @@ int Personaje::getVida() const {
 }
 
 void Personaje::restarVida(int cantidad) {
+    if (inmune) return;
+
     vida -= cantidad;
     if (vida < 0) vida = 0;
+
+    inmune = true;
+    timerInmunidad->start(1000);
+    timerParpadeo->start(100);
 }
 
 void Personaje::curar(int cantidad) {
