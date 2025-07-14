@@ -9,6 +9,8 @@
 #include <QObject>
 #include "goku.h"
 #include "enemigo.h"
+#include <QMediaPlayer>
+#include <QAudioOutput>
 
 
 class Juego : public QObject {
@@ -54,6 +56,12 @@ private:
     QGraphicsTextItem* textoEnemigos;
     QGraphicsTextItem* sombraEnemigos;
     bool victoriaMostrada = false;
+
+    QMediaPlayer* sonidoFondoNivel1;
+    QAudioOutput* salidaAudio;
+
+    QMediaPlayer* sonidoVictoria;
+    QAudioOutput* salidaVictoria;
 
 
 };

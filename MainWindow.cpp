@@ -81,7 +81,7 @@ void MainWindow::iniciarJuego() {
     setCentralWidget(view);
 
     juego = new Juego(view, this);
-    juego->iniciarNivel1();  // Cambiar a iniciarNivel2() si prefieres
+    juego->iniciarNivel1();
 }
 
 // === SALIR ===

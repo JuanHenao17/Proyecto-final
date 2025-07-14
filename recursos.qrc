@@ -21,6 +21,8 @@
 
     <qresource prefix="/sonidos">
         <file>sonidos/disparo.wav</file>
+        <file>sonidos/fondo_nivel1.wav</file>
+        <file>sonidos/victoria.mp3</file>
     </qresource>
 </RCC>
 

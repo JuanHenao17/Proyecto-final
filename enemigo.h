@@ -1,20 +1,20 @@
-#ifndef ENEMIGO_H
-#define ENEMIGO_H
+#pragma once
 
-#include "personaje.h"
+#include <QGraphicsPixmapItem>
 #include <QTimer>
-#include <QObject>
+#include <QSoundEffect>
 
-class Enemigo : public Personaje {
+class Enemigo : public QObject, public QGraphicsPixmapItem {
     Q_OBJECT
-
 public:
     Enemigo(qreal posGoku);
+
+private slots:
     void disparar();
 
 private:
     QTimer* timerDisparo;
     bool mirandoIzquierda;
-};
 
-#endif // ENEMIGO_H
+    QSoundEffect* efectoDisparo;
+};

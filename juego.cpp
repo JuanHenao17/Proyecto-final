@@ -18,10 +18,10 @@ void Juego::limpiarEscena() {
     }
 
     if (scene) {
-        scene->removeEventFilter(this);  // por si quedó enganchado
-        scene->clear();                  // elimina todos los items
-        view->setScene(nullptr);         // desasocia la escena del view
-        delete scene;                    // ahora sí es seguro eliminarla
+        scene->removeEventFilter(this);
+        scene->clear();
+        view->setScene(nullptr);
+        delete scene;
         scene = nullptr;
     }
 
@@ -31,40 +31,47 @@ void Juego::limpiarEscena() {
 
 void Juego::iniciarNivel1() {
     limpiarEscena();
+
+
+
+    sonidoFondoNivel1 = new QMediaPlayer(this);
+    salidaAudio = new QAudioOutput(this);
+    sonidoFondoNivel1->setAudioOutput(salidaAudio);
+    sonidoFondoNivel1->setSource(QUrl("qrc:/sonidos/sonidos/fondo_nivel1.wav"));
+    sonidoFondoNivel1->setLoops(QMediaPlayer::Infinite);
+    salidaAudio->setVolume(0.5);
+    sonidoFondoNivel1->play();
+
+
     scene = new QGraphicsScene();
     scene->setSceneRect(0, 0, 1280, 720);
 
-    // Fondo
+
     QPixmap fondoPixmap(":/imagenes/imagenes/cueva_fondo.jpg");
     QGraphicsPixmapItem* fondo = new QGraphicsPixmapItem(fondoPixmap.scaled(1280, 720));
     fondo->setZValue(-1);
     scene->addItem(fondo);
 
-    // Goku
+
     goku = new Goku();
     goku->setPos(640, 550);
     scene->addItem(goku);
 
-    // === Fuente ===
+
     int fontId = QFontDatabase::addApplicationFont(":/fuentes/fuentes/PressStart.ttf");
     QString fontFamily = QFontDatabase::applicationFontFamilies(fontId).at(0);
     QFont fuentePixel(fontFamily, 20);
 
-    // === NOTA NIVEL ===
+
     notaNivel = new QGraphicsTextItem("Nivel 1:\n¡Evita las rocas durante 90 segundos!");
     notaNivel->setFont(fuentePixel);
     notaNivel->setDefaultTextColor(Qt::white);
     notaNivel->setZValue(99);
-
     QRectF bounds = notaNivel->boundingRect();
-    notaNivel->setPos(
-        (1280 - bounds.width()) / 2,
-        (720 - bounds.height()) / 2
-        );
-
+    notaNivel->setPos((1280 - bounds.width()) / 2, (720 - bounds.height()) / 2);
     scene->addItem(notaNivel);
 
-    // === HUD ===
+
     int barraAncho = 200;
     int barraX = (1280 - barraAncho) / 2;
 
@@ -109,7 +116,8 @@ void Juego::iniciarNivel1() {
     textoVida->setZValue(4);
     scene->addItem(textoVida);
 
-    tiempoRestante = 4;
+
+    tiempoRestante = 90;
 
     sombraTiempo = new QGraphicsTextItem("TIEMPO: 90");
     sombraTiempo->setFont(fuentePixel);
@@ -125,23 +133,25 @@ void Juego::iniciarNivel1() {
     tiempoText->setZValue(4);
     scene->addItem(tiempoText);
 
-    // === Escena y timer ===
+
     view->setScene(scene);
     view->setFixedSize(1280, 720);
     view->setFocus();
     scene->installEventFilter(this);
     nivelTerminado = false;
 
-    // === Arranca el juego de una ===
+
     timer = new QTimer(this);
     connect(timer, &QTimer::timeout, [&]() {
         goku->aplicarFisica();
+
 
         if (QRandomGenerator::global()->bounded(30) == 0) {
             Roca* roca = new Roca();
             roca->setPos(QRandomGenerator::global()->bounded(1280), 0);
             scene->addItem(roca);
         }
+
 
         QList<QGraphicsItem*> items = scene->items();
         for (QGraphicsItem* item : items) {
@@ -163,13 +173,16 @@ void Juego::iniciarNivel1() {
             }
         }
 
+
         vidaBar->setRect(0, 0, goku->getVida() * 2, 20);
+
 
         static int contadorFrame = 0;
         contadorFrame++;
         if (contadorFrame >= 33) {
             tiempoRestante--;
             tiempoText->setPlainText("TIEMPO: " + QString::number(tiempoRestante));
+            sombraTiempo->setPlainText("TIEMPO: " + QString::number(tiempoRestante));
             contadorFrame = 0;
 
             if (tiempoRestante <= 0) {
@@ -177,21 +190,44 @@ void Juego::iniciarNivel1() {
                 nivelTerminado = true;
                 ganoNivel = true;
 
+
+                if (sonidoFondoNivel1) sonidoFondoNivel1->stop();
+
+
+                sonidoVictoria = new QMediaPlayer(this);
+                salidaVictoria = new QAudioOutput(this);
+                sonidoVictoria->setAudioOutput(salidaVictoria);
+                sonidoVictoria->setSource(QUrl("qrc:/sonidos/sonidos/victoria.mp3"));
+                salidaVictoria->setVolume(0.8);
+                sonidoVictoria->play();
+
+
                 scene->removeItem(tiempoText);
                 delete tiempoText;
+
 
                 QGraphicsPixmapItem* ganasteImg = new QGraphicsPixmapItem(
                     QPixmap(":/imagenes/imagenes/ganaste.png").scaled(400, 400)
                     );
                 ganasteImg->setPos(440, 150);
                 scene->addItem(ganasteImg);
+
+
+                QTimer::singleShot(3000, this, [=]() {
+                    iniciarNivel2();
+                });
             }
+
         }
+
 
         if (goku->getVida() <= 0) {
             timer->stop();
             nivelTerminado = true;
             ganoNivel = false;
+
+
+            if (sonidoFondoNivel1) sonidoFondoNivel1->stop();
 
             QGraphicsPixmapItem* perdisteImg = new QGraphicsPixmapItem(
                 QPixmap(":/imagenes/imagenes/perdiste.png").scaled(400, 400)
@@ -203,7 +239,7 @@ void Juego::iniciarNivel1() {
 
     timer->start(30);
 
-    // === Desaparece nota a los 4s ===
+
     QTimer::singleShot(4000, this, [=]() {
         if (notaNivel) {
             scene->removeItem(notaNivel);
@@ -217,45 +253,56 @@ void Juego::iniciarNivel1() {
 void Juego::iniciarNivel2() {
     limpiarEscena();
 
+    if (sonidoVictoria) {
+        sonidoVictoria->stop();
+        delete sonidoVictoria;
+        sonidoVictoria = nullptr;
+    }
+
+    if (salidaVictoria) {
+        delete salidaVictoria;
+        salidaVictoria = nullptr;
+    }
+
     scene = new QGraphicsScene();
     scene->setSceneRect(0, 0, 1280, 720);
 
-    // === Fondo nivel 2 ===
+
     QPixmap fondoPixmap(":/imagenes/imagenes/fondo_submarino.png");
     QGraphicsPixmapItem* fondo = new QGraphicsPixmapItem(fondoPixmap.scaled(1280, 720));
     scene->addItem(fondo);
     fondo->setZValue(-1);
 
-    // === Goku reaparece ===
+
     goku = new Goku();
     goku->setPos(100, 550);
     scene->addItem(goku);
 
-    // === Fuente Pixel ===
+
     int fontId = QFontDatabase::addApplicationFont(":/fuentes/fuentes/PressStart.ttf");
     QString fontFamily = QFontDatabase::applicationFontFamilies(fontId).at(0);
     QFont fuentePixel(fontFamily, 16);
 
-    // --- NOTA NIVEL ---
+
     notaNivel = new QGraphicsTextItem("Nivel 2:\n¡Elimina a 10 enemigos!");
     notaNivel->setFont(fuentePixel);
     notaNivel->setDefaultTextColor(Qt::white);
-    notaNivel->setZValue(99);  // Asegura que quede encima
+    notaNivel->setZValue(99);
 
-    // Centrar la nota en pantalla
+
     QRectF bounds = notaNivel->boundingRect();
     notaNivel->setPos(
         (1280 - bounds.width()) / 2,
         (720 - bounds.height()) / 2
         );
 
-    // Agregar a la escena
+
     scene->addItem(notaNivel);
 
     int barraAncho = 200;
     int barraX = (1280 - barraAncho) / 2;
 
-    // === Marco de vida ===
+
     QGraphicsRectItem* marcoVida = new QGraphicsRectItem(0, 0, barraAncho, 20);
     marcoVida->setBrush(Qt::black);
     marcoVida->setPen(QPen(Qt::lightGray, 2));
@@ -263,14 +310,14 @@ void Juego::iniciarNivel2() {
     marcoVida->setZValue(1);
     scene->addItem(marcoVida);
 
-    // === Barra de vida (relleno) ===
+
     vidaBar = new QGraphicsRectItem(0, 0, goku->getVida() * 2, 20);
     vidaBar->setBrush(Qt::red);
     vidaBar->setPos(barraX, 13);
     vidaBar->setZValue(2);
     scene->addItem(vidaBar);
 
-    // === Nombre con sombra ===
+
     sombraNombre = new QGraphicsTextItem("GOKU   LVL   2");
     sombraNombre->setFont(fuentePixel);
     sombraNombre->setDefaultTextColor(Qt::black);
@@ -285,7 +332,7 @@ void Juego::iniciarNivel2() {
     textoNombre->setZValue(4);
     scene->addItem(textoNombre);
 
-    // === Vida con sombra ===
+
     sombraVida = new QGraphicsTextItem("100/100");
     sombraVida->setFont(fuentePixel);
     sombraVida->setDefaultTextColor(Qt::black);
@@ -300,7 +347,7 @@ void Juego::iniciarNivel2() {
     textoVida->setZValue(4);
     scene->addItem(textoVida);
 
-    // === Contador de enemigos ===
+
     sombraEnemigos = new QGraphicsTextItem("ENEMIGOS 0/10");
     sombraEnemigos->setFont(fuentePixel);
     sombraEnemigos->setDefaultTextColor(Qt::black);
@@ -326,10 +373,10 @@ void Juego::iniciarNivel2() {
     connect(timer, &QTimer::timeout, [&]() {
         goku->aplicarFisica();
 
-        // === Actualiza barra de vida SIEMPRE ===
+
         vidaBar->setRect(0, 0, goku->getVida() * 2, 20);
 
-        // ✅ Actualiza texto de vida SIEMPRE ===
+
         int vidaActual = goku->getVida();
         textoVida->setPlainText(QString::number(vidaActual) + "/100");
         sombraVida->setPlainText(QString::number(vidaActual) + "/100");
@@ -367,21 +414,33 @@ void Juego::iniciarNivel2() {
             timer->stop();
             nivelTerminado = true;
 
-            // Elimina enemigos restantes
+
+            if (sonidoFondoNivel1) sonidoFondoNivel1->stop();
+
+
+            sonidoVictoria = new QMediaPlayer(this);
+            salidaVictoria = new QAudioOutput(this);
+            sonidoVictoria->setAudioOutput(salidaVictoria);
+            sonidoVictoria->setSource(QUrl("qrc:/sonidos/sonidos/victoria.mp3"));
+            salidaVictoria->setVolume(0.8);
+            sonidoVictoria->play();
+
+
             for (Enemigo* enemigo : enemigos) {
                 scene->removeItem(enemigo);
                 delete enemigo;
             }
             enemigos.clear();
 
-            // Mostrar sprite de victoria
+
             QPixmap img(":/imagenes/imagenes/victoria.png");
             QGraphicsPixmapItem* victoriaSprite = new QGraphicsPixmapItem(
                 img.scaled(1280, 720, Qt::IgnoreAspectRatio, Qt::SmoothTransformation)
                 );
-            victoriaSprite->setZValue(100); // Por encima de todo
-            victoriaSprite->setPos(0, 0);   // Comienza en la esquina superior izquierda
+            victoriaSprite->setZValue(100);
+            victoriaSprite->setPos(0, 0);
             scene->addItem(victoriaSprite);
+
             victoriaMostrada = true;
         }
 
@@ -400,7 +459,7 @@ void Juego::iniciarNivel2() {
 
     timer->start(30);
 
-    // === Desaparece nota a los 4s ===
+
     QTimer::singleShot(4000, this, [=]() {
         if (notaNivel) {
             scene->removeItem(notaNivel);
@@ -416,7 +475,7 @@ bool Juego::eventFilter(QObject* obj, QEvent* event) {
     if (event->type() == QEvent::KeyPress) {
         QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
 
-        // === ENTER después de mostrar "VICTORIA" ===
+
         if (victoriaMostrada &&
             (keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter)) {
             qDebug() << "🎉 Victoria confirmada. Cerrando juego...";
@@ -424,18 +483,18 @@ bool Juego::eventFilter(QObject* obj, QEvent* event) {
             return true;
         }
 
-        // === ENTER para quitar la nota inicial y arrancar nivel ===
+
         if (keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter) {
             if (notaNivel) {
                 scene->removeItem(notaNivel);
                 delete notaNivel;
                 notaNivel = nullptr;
 
-                timer->start(30); // ✅ Inicia física y enemigos
+                timer->start(30);
                 return true;
             }
 
-            // === Si el nivel terminó y se quiere reiniciar o avanzar ===
+
             if (nivelTerminado) {
                 if (nivelActual == 1) {
                     if (ganoNivel) {
@@ -445,13 +504,13 @@ bool Juego::eventFilter(QObject* obj, QEvent* event) {
                         iniciarNivel1();
                     }
                 } else if (nivelActual == 2) {
-                    iniciarNivel2(); // puedes cambiar esto por menú o final
+                    iniciarNivel2();
                 }
                 return true;
             }
         }
     }
 
-    // Evento no manejado por aquí → continúa flujo normal
+
     return QObject::eventFilter(obj, event);
 }
