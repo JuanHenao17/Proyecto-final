@@ -109,7 +109,7 @@ void Juego::iniciarNivel1() {
     textoVida->setZValue(4);
     scene->addItem(textoVida);
 
-    tiempoRestante = 5;
+    tiempoRestante = 4;
 
     sombraTiempo = new QGraphicsTextItem("TIEMPO: 90");
     sombraTiempo->setFont(fuentePixel);
@@ -367,12 +367,24 @@ void Juego::iniciarNivel2() {
             timer->stop();
             nivelTerminado = true;
 
-            QGraphicsPixmapItem* ganasteImg = new QGraphicsPixmapItem(
-                QPixmap(":/imagenes/imagenes/ganaste.png").scaled(400, 400)
+            // Elimina enemigos restantes
+            for (Enemigo* enemigo : enemigos) {
+                scene->removeItem(enemigo);
+                delete enemigo;
+            }
+            enemigos.clear();
+
+            // Mostrar sprite de victoria
+            QPixmap img(":/imagenes/imagenes/victoria.png");
+            QGraphicsPixmapItem* victoriaSprite = new QGraphicsPixmapItem(
+                img.scaled(1280, 720, Qt::IgnoreAspectRatio, Qt::SmoothTransformation)
                 );
-            ganasteImg->setPos(440, 150);
-            scene->addItem(ganasteImg);
+            victoriaSprite->setZValue(100); // Por encima de todo
+            victoriaSprite->setPos(0, 0);   // Comienza en la esquina superior izquierda
+            scene->addItem(victoriaSprite);
+            victoriaMostrada = true;
         }
+
 
         if (goku->getVida() <= 0) {
             timer->stop();
@@ -404,19 +416,26 @@ bool Juego::eventFilter(QObject* obj, QEvent* event) {
     if (event->type() == QEvent::KeyPress) {
         QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
 
+        // === ENTER después de mostrar "VICTORIA" ===
+        if (victoriaMostrada &&
+            (keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter)) {
+            qDebug() << "🎉 Victoria confirmada. Cerrando juego...";
+            QCoreApplication::quit();  // 🔚 Cierra el juego
+            return true;
+        }
+
+        // === ENTER para quitar la nota inicial y arrancar nivel ===
         if (keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter) {
             if (notaNivel) {
-                // Empieza nivel realmente
                 scene->removeItem(notaNivel);
                 delete notaNivel;
                 notaNivel = nullptr;
 
-                timer->start(30); // ✅ Ahora sí arranca
-
-                return true;  // Evento manejado
+                timer->start(30); // ✅ Inicia física y enemigos
+                return true;
             }
 
-            // Si terminó el nivel, reintenta o avanza
+            // === Si el nivel terminó y se quiere reiniciar o avanzar ===
             if (nivelTerminado) {
                 if (nivelActual == 1) {
                     if (ganoNivel) {
@@ -426,11 +445,13 @@ bool Juego::eventFilter(QObject* obj, QEvent* event) {
                         iniciarNivel1();
                     }
                 } else if (nivelActual == 2) {
-                    iniciarNivel2();
+                    iniciarNivel2(); // puedes cambiar esto por menú o final
                 }
                 return true;
             }
         }
     }
+
+    // Evento no manejado por aquí → continúa flujo normal
     return QObject::eventFilter(obj, event);
 }

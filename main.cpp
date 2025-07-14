@@ -6,11 +6,6 @@
 
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
-
-    // Cargar la fuente desde los recursos
-    int fontId = QFontDatabase::addApplicationFont(":/fuentes/fuentes/PressStart.ttf");
-
-
     // Iniciar ventana principal
     MainWindow w;
     w.show();

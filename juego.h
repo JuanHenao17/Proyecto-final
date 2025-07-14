@@ -53,6 +53,7 @@ private:
 
     QGraphicsTextItem* textoEnemigos;
     QGraphicsTextItem* sombraEnemigos;
+    bool victoriaMostrada = false;
 
 
 };

@@ -12,6 +12,7 @@
         <file>imagenes/fondo_submarino.png</file>
         <file>imagenes/enemigo.png</file>
         <file>imagenes/perdiste2.png</file>
+        <file>imagenes/victoria.png</file>
     </qresource>
 
     <qresource prefix="/fuentes">
