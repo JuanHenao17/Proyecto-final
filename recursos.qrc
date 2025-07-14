@@ -11,11 +11,15 @@
         <file>imagenes/disparos.png</file>
         <file>imagenes/fondo_submarino.png</file>
         <file>imagenes/enemigo.png</file>
-
+        <file>imagenes/perdiste2.png</file>
     </qresource>
-
 
     <qresource prefix="/fuentes">
         <file>fuentes/PressStart.ttf</file>
     </qresource>
+
+    <qresource prefix="/sonidos">
+        <file>sonidos/disparo.wav</file>
+    </qresource>
 </RCC>
+

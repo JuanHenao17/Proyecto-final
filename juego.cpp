@@ -11,20 +11,22 @@ Juego::Juego(QGraphicsView* view, QObject* parent)
     vidaBar(nullptr), tiempoText(nullptr), tiempoRestante(0), nivelActual(1) {}
 
 void Juego::limpiarEscena() {
-    if (scene) {
-        QList<QGraphicsItem*> items = scene->items();
-        for (QGraphicsItem* item : items) {
-            scene->removeItem(item);
-            delete item;
-        }
-        delete scene;
-        scene = nullptr;
-    }
     if (timer) {
         timer->stop();
         delete timer;
         timer = nullptr;
     }
+
+    if (scene) {
+        scene->removeEventFilter(this);  // por si quedó enganchado
+        scene->clear();                  // elimina todos los items
+        view->setScene(nullptr);         // desasocia la escena del view
+        delete scene;                    // ahora sí es seguro eliminarla
+        scene = nullptr;
+    }
+
+    enemigos.clear();
+    enemigosEliminados = 0;
 }
 
 void Juego::iniciarNivel1() {
@@ -43,16 +45,29 @@ void Juego::iniciarNivel1() {
     goku->setPos(640, 550);
     scene->addItem(goku);
 
-    // Fuente más grande
+    // === Fuente ===
     int fontId = QFontDatabase::addApplicationFont(":/fuentes/fuentes/PressStart.ttf");
     QString fontFamily = QFontDatabase::applicationFontFamilies(fontId).at(0);
-    QFont fuentePixel(fontFamily, 20);  // Aumentado de 12 a 16
+    QFont fuentePixel(fontFamily, 20);
 
-    // Posición centrada de la barra de vida
+    // === NOTA NIVEL ===
+    notaNivel = new QGraphicsTextItem("Nivel 1:\n¡Evita las rocas durante 90 segundos!");
+    notaNivel->setFont(fuentePixel);
+    notaNivel->setDefaultTextColor(Qt::white);
+    notaNivel->setZValue(99);
+
+    QRectF bounds = notaNivel->boundingRect();
+    notaNivel->setPos(
+        (1280 - bounds.width()) / 2,
+        (720 - bounds.height()) / 2
+        );
+
+    scene->addItem(notaNivel);
+
+    // === HUD ===
     int barraAncho = 200;
-    int barraX = (1280 - barraAncho) / 2; // 540
+    int barraX = (1280 - barraAncho) / 2;
 
-    // Marco de vida
     QGraphicsRectItem* marcoVida = new QGraphicsRectItem(0, 0, barraAncho, 20);
     marcoVida->setBrush(Qt::black);
     marcoVida->setPen(QPen(Qt::lightGray, 2));
@@ -60,14 +75,12 @@ void Juego::iniciarNivel1() {
     marcoVida->setZValue(1);
     scene->addItem(marcoVida);
 
-    // Barra de vida roja
     vidaBar = new QGraphicsRectItem(0, 0, goku->getVida() * 2, 20);
     vidaBar->setBrush(Qt::red);
-    vidaBar->setPos(barraX, 14);
+    vidaBar->setPos(barraX, 13);
     vidaBar->setZValue(2);
     scene->addItem(vidaBar);
 
-    // Texto centrado arriba de la barra
     sombraNombre = new QGraphicsTextItem("GOKU   LVL   1");
     sombraNombre->setFont(fuentePixel);
     sombraNombre->setDefaultTextColor(Qt::black);
@@ -82,7 +95,6 @@ void Juego::iniciarNivel1() {
     textoNombre->setZValue(4);
     scene->addItem(textoNombre);
 
-    // Vida numérica a la derecha de la barra
     sombraVida = new QGraphicsTextItem("100/100");
     sombraVida->setFont(fuentePixel);
     sombraVida->setDefaultTextColor(Qt::black);
@@ -97,8 +109,7 @@ void Juego::iniciarNivel1() {
     textoVida->setZValue(4);
     scene->addItem(textoVida);
 
-    // Tiempo (mantiene su posición en esquina superior derecha)
-    tiempoRestante = 90;
+    tiempoRestante = 5;
 
     sombraTiempo = new QGraphicsTextItem("TIEMPO: 90");
     sombraTiempo->setFont(fuentePixel);
@@ -110,18 +121,18 @@ void Juego::iniciarNivel1() {
     tiempoText = new QGraphicsTextItem("TIEMPO: 90");
     tiempoText->setFont(fuentePixel);
     tiempoText->setDefaultTextColor(Qt::white);
-    tiempoText->setPos(1000, 14);
+    tiempoText->setPos(1000, 12);
     tiempoText->setZValue(4);
     scene->addItem(tiempoText);
 
-    // Escena y timer
+    // === Escena y timer ===
     view->setScene(scene);
     view->setFixedSize(1280, 720);
     view->setFocus();
     scene->installEventFilter(this);
     nivelTerminado = false;
 
-
+    // === Arranca el juego de una ===
     timer = new QTimer(this);
     connect(timer, &QTimer::timeout, [&]() {
         goku->aplicarFisica();
@@ -152,15 +163,13 @@ void Juego::iniciarNivel1() {
             }
         }
 
-        // Actualizar barra de vida
         vidaBar->setRect(0, 0, goku->getVida() * 2, 20);
 
-        // Actualizar tiempo
         static int contadorFrame = 0;
         contadorFrame++;
         if (contadorFrame >= 33) {
             tiempoRestante--;
-            tiempoText->setPlainText("Tiempo: " + QString::number(tiempoRestante));
+            tiempoText->setPlainText("TIEMPO: " + QString::number(tiempoRestante));
             contadorFrame = 0;
 
             if (tiempoRestante <= 0) {
@@ -171,7 +180,6 @@ void Juego::iniciarNivel1() {
                 scene->removeItem(tiempoText);
                 delete tiempoText;
 
-                // Muestra imagen de GANASTE
                 QGraphicsPixmapItem* ganasteImg = new QGraphicsPixmapItem(
                     QPixmap(":/imagenes/imagenes/ganaste.png").scaled(400, 400)
                     );
@@ -191,11 +199,20 @@ void Juego::iniciarNivel1() {
             perdisteImg->setPos(440, 150);
             scene->addItem(perdisteImg);
         }
-
     });
 
     timer->start(30);
+
+    // === Desaparece nota a los 4s ===
+    QTimer::singleShot(4000, this, [=]() {
+        if (notaNivel) {
+            scene->removeItem(notaNivel);
+            delete notaNivel;
+            notaNivel = nullptr;
+        }
+    });
 }
+
 
 void Juego::iniciarNivel2() {
     limpiarEscena();
@@ -203,79 +220,98 @@ void Juego::iniciarNivel2() {
     scene = new QGraphicsScene();
     scene->setSceneRect(0, 0, 1280, 720);
 
-    // Fondo del nivel 2
+    // === Fondo nivel 2 ===
     QPixmap fondoPixmap(":/imagenes/imagenes/fondo_submarino.png");
     QGraphicsPixmapItem* fondo = new QGraphicsPixmapItem(fondoPixmap.scaled(1280, 720));
     scene->addItem(fondo);
     fondo->setZValue(-1);
 
-    // Goku reaparece
+    // === Goku reaparece ===
     goku = new Goku();
     goku->setPos(100, 550);
     scene->addItem(goku);
 
-    // Fuente
+    // === Fuente Pixel ===
     int fontId = QFontDatabase::addApplicationFont(":/fuentes/fuentes/PressStart.ttf");
     QString fontFamily = QFontDatabase::applicationFontFamilies(fontId).at(0);
     QFont fuentePixel(fontFamily, 16);
 
+    // --- NOTA NIVEL ---
+    notaNivel = new QGraphicsTextItem("Nivel 2:\n¡Elimina a 10 enemigos!");
+    notaNivel->setFont(fuentePixel);
+    notaNivel->setDefaultTextColor(Qt::white);
+    notaNivel->setZValue(99);  // Asegura que quede encima
+
+    // Centrar la nota en pantalla
+    QRectF bounds = notaNivel->boundingRect();
+    notaNivel->setPos(
+        (1280 - bounds.width()) / 2,
+        (720 - bounds.height()) / 2
+        );
+
+    // Agregar a la escena
+    scene->addItem(notaNivel);
+
     int barraAncho = 200;
     int barraX = (1280 - barraAncho) / 2;
 
-    // Vida
+    // === Marco de vida ===
     QGraphicsRectItem* marcoVida = new QGraphicsRectItem(0, 0, barraAncho, 20);
     marcoVida->setBrush(Qt::black);
     marcoVida->setPen(QPen(Qt::lightGray, 2));
-    marcoVida->setPos(barraX, 30);
+    marcoVida->setPos(barraX, 13);
     marcoVida->setZValue(1);
     scene->addItem(marcoVida);
 
+    // === Barra de vida (relleno) ===
     vidaBar = new QGraphicsRectItem(0, 0, goku->getVida() * 2, 20);
     vidaBar->setBrush(Qt::red);
-    vidaBar->setPos(barraX, 30);
+    vidaBar->setPos(barraX, 13);
     vidaBar->setZValue(2);
     scene->addItem(vidaBar);
 
+    // === Nombre con sombra ===
     sombraNombre = new QGraphicsTextItem("GOKU   LVL   2");
     sombraNombre->setFont(fuentePixel);
     sombraNombre->setDefaultTextColor(Qt::black);
-    sombraNombre->setPos(barraX + 1, 6);
+    sombraNombre->setPos(10, 11);
     sombraNombre->setZValue(3);
     scene->addItem(sombraNombre);
 
     textoNombre = new QGraphicsTextItem("GOKU   LVL   2");
     textoNombre->setFont(fuentePixel);
     textoNombre->setDefaultTextColor(Qt::white);
-    textoNombre->setPos(barraX, 5);
+    textoNombre->setPos(6, 14);
     textoNombre->setZValue(4);
     scene->addItem(textoNombre);
 
+    // === Vida con sombra ===
     sombraVida = new QGraphicsTextItem("100/100");
     sombraVida->setFont(fuentePixel);
     sombraVida->setDefaultTextColor(Qt::black);
-    sombraVida->setPos(barraX + barraAncho + 11, 31);
+    sombraVida->setPos(barraX + barraAncho + 11, 6);
     sombraVida->setZValue(3);
     scene->addItem(sombraVida);
 
     textoVida = new QGraphicsTextItem("100/100");
     textoVida->setFont(fuentePixel);
     textoVida->setDefaultTextColor(Qt::white);
-    textoVida->setPos(barraX + barraAncho + 10, 30);
+    textoVida->setPos(barraX + barraAncho + 10, 11);
     textoVida->setZValue(4);
     scene->addItem(textoVida);
 
-    // ENEMIGOS RESTANTES agregado
-    sombraEnemigos = new QGraphicsTextItem("ENEMIGOS 0/20");
+    // === Contador de enemigos ===
+    sombraEnemigos = new QGraphicsTextItem("ENEMIGOS 0/10");
     sombraEnemigos->setFont(fuentePixel);
     sombraEnemigos->setDefaultTextColor(Qt::black);
-    sombraEnemigos->setPos(31, 71);
+    sombraEnemigos->setPos(980, 11);
     sombraEnemigos->setZValue(3);
     scene->addItem(sombraEnemigos);
 
-    textoEnemigos = new QGraphicsTextItem("ENEMIGOS 0/20");
+    textoEnemigos = new QGraphicsTextItem("ENEMIGOS 0/10");
     textoEnemigos->setFont(fuentePixel);
     textoEnemigos->setDefaultTextColor(Qt::white);
-    textoEnemigos->setPos(30, 70);
+    textoEnemigos->setPos(980, 14);
     textoEnemigos->setZValue(4);
     scene->addItem(textoEnemigos);
 
@@ -290,12 +326,17 @@ void Juego::iniciarNivel2() {
     connect(timer, &QTimer::timeout, [&]() {
         goku->aplicarFisica();
 
-        // Actualiza barra de vida
+        // === Actualiza barra de vida SIEMPRE ===
         vidaBar->setRect(0, 0, goku->getVida() * 2, 20);
+
+        // ✅ Actualiza texto de vida SIEMPRE ===
+        int vidaActual = goku->getVida();
+        textoVida->setPlainText(QString::number(vidaActual) + "/100");
+        sombraVida->setPlainText(QString::number(vidaActual) + "/100");
 
         static int spawnCounter = 0;
         spawnCounter++;
-        if (spawnCounter >= 100) {  // Cada 3 segundos aprox (100 * 30 ms)
+        if (spawnCounter >= 100) {
             Enemigo* enemigo = new Enemigo(goku->x());
             enemigos.append(enemigo);
             scene->addItem(enemigo);
@@ -307,11 +348,9 @@ void Juego::iniciarNivel2() {
 
             if (goku->collidesWithItem(enemigo)) {
                 if (goku->y() + goku->boundingRect().height() <= enemigo->y() + 30) {
-                    // Goku pisa al enemigo
                     enemigosEliminados++;
 
-                    // ✅ Actualiza contador en pantalla
-                    QString enemigosTexto = "ENEMIGOS " + QString::number(enemigosEliminados) + "/20";
+                    QString enemigosTexto = "ENEMIGOS " + QString::number(enemigosEliminados) + "/10";
                     textoEnemigos->setPlainText(enemigosTexto);
                     sombraEnemigos->setPlainText(enemigosTexto);
 
@@ -319,13 +358,7 @@ void Juego::iniciarNivel2() {
                     enemigos.removeAt(i);
                     delete enemigo;
                 } else {
-                    // Golpe lateral
                     goku->restarVida(20);
-
-                    // ✅ Actualiza texto de vida
-                    int vidaActual = goku->getVida();
-                    textoVida->setPlainText(QString::number(vidaActual) + "/100");
-                    sombraVida->setPlainText(QString::number(vidaActual) + "/100");
                 }
             }
         }
@@ -346,7 +379,7 @@ void Juego::iniciarNivel2() {
             nivelTerminado = true;
 
             QGraphicsPixmapItem* perdisteImg = new QGraphicsPixmapItem(
-                QPixmap(":/imagenes/imagenes/perdiste.png").scaled(400, 400)
+                QPixmap(":/imagenes/imagenes/perdiste2.png").scaled(400, 400)
                 );
             perdisteImg->setPos(440, 150);
             scene->addItem(perdisteImg);
@@ -354,28 +387,49 @@ void Juego::iniciarNivel2() {
     });
 
     timer->start(30);
+
+    // === Desaparece nota a los 4s ===
+    QTimer::singleShot(4000, this, [=]() {
+        if (notaNivel) {
+            scene->removeItem(notaNivel);
+            delete notaNivel;
+            notaNivel = nullptr;
+        }
+    });
 }
 
 
+
 bool Juego::eventFilter(QObject* obj, QEvent* event) {
-    if (nivelTerminado && event->type() == QEvent::KeyPress) {
+    if (event->type() == QEvent::KeyPress) {
         QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
 
         if (keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter) {
-            if (nivelActual == 1) {
-                if (ganoNivel) {
-                    nivelActual = 2;
-                    iniciarNivel2();
-                } else {
-                    iniciarNivel1();  // Reintentar nivel 1
-                }
-            } else if (nivelActual == 2) {
-                if (!ganoNivel) {
-                    iniciarNivel2();  // Reintentar nivel 2 si pierde
-                }
+            if (notaNivel) {
+                // Empieza nivel realmente
+                scene->removeItem(notaNivel);
+                delete notaNivel;
+                notaNivel = nullptr;
+
+                timer->start(30); // ✅ Ahora sí arranca
+
+                return true;  // Evento manejado
             }
 
-            return true;  // Evento manejado
+            // Si terminó el nivel, reintenta o avanza
+            if (nivelTerminado) {
+                if (nivelActual == 1) {
+                    if (ganoNivel) {
+                        nivelActual = 2;
+                        iniciarNivel2();
+                    } else {
+                        iniciarNivel1();
+                    }
+                } else if (nivelActual == 2) {
+                    iniciarNivel2();
+                }
+                return true;
+            }
         }
     }
     return QObject::eventFilter(obj, event);

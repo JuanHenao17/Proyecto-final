@@ -142,6 +142,7 @@ compiler_rcc_clean:
 	-$(DEL_FILE) release\qrc_recursos.cpp
 release/qrc_recursos.cpp: ../../recursos.qrc \
 		C:/Qt/6.8.2/mingw_64/bin/rcc.exe \
+		../../sonidos/disparo.wav \
 		../../fuentes/PressStart.ttf \
 		../../imagenes/cueva_fondo.jpg \
 		../../imagenes/roca.png \
@@ -151,6 +152,7 @@ release/qrc_recursos.cpp: ../../recursos.qrc \
 		../../imagenes/fondo_submarino.png \
 		../../imagenes/fondo.jpg \
 		../../imagenes/goku_corriendo_izq.png \
+		../../imagenes/perdiste2.png \
 		../../imagenes/goku_corriendo.png \
 		../../imagenes/goku_saltando.png \
 		../../imagenes/ganaste.png

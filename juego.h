@@ -29,6 +29,8 @@ private:
     Goku* goku;
     QGraphicsRectItem* vidaBar;
 
+    QGraphicsTextItem* notaNivel = nullptr;
+
     // HUD
     QGraphicsTextItem* tiempoText;
     QGraphicsTextItem* sombraTiempo;

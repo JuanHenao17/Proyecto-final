@@ -10,7 +10,7 @@ Enemigo::Enemigo(qreal posGoku) {
     int posX;
     do{
         posX = QRandomGenerator::global()->bounded(200, 1080);
-    } while(std::abs(posX - posGoku) < 150);
+    } while(std::abs(posX - posGoku) < 200);
 
     // Definir si está del lado izquierdo o derecho
     if (posX > 640) {
@@ -25,7 +25,7 @@ Enemigo::Enemigo(qreal posGoku) {
 
     timerDisparo = new QTimer(this);
     connect(timerDisparo, &QTimer::timeout, this, &Enemigo::disparar);
-    timerDisparo->start(1000); // Dispara cada 2 segundos
+    timerDisparo->start(1200); // Dispara cada 2 segundos
 }
 
 void Enemigo::disparar() {
