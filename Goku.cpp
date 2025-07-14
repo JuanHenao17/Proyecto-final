@@ -1,4 +1,5 @@
 #include "goku.h"
+#include "qtimer.h"
 #include <QKeyEvent>
 
 Goku::Goku() {
@@ -17,6 +18,19 @@ Goku::Goku() {
     enElAire = false;
     setVida(100);
 
+    timerInmunidad = new QTimer(this);
+    timerInmunidad->setSingleShot(true);
+    connect(timerInmunidad, &QTimer::timeout, this, [=]() {
+        inmune = false;
+        setVisible(true);
+        timerParpadeo->stop();
+        setOpacity(1.0);
+    });
+
+    timerParpadeo = new QTimer(this);
+    connect(timerParpadeo, &QTimer::timeout, this, [=]() {
+        setOpacity(esOpaco() ? 0.3 : 1.0);
+    });
 }
 
 void Goku::aplicarFisica() {
@@ -111,4 +125,8 @@ void Goku::confSprite(bool band){
 
     if(cont>=8){cont=0;}
 
+}
+
+bool Goku::esOpaco() const {
+    return opacity() >= 1.0;
 }

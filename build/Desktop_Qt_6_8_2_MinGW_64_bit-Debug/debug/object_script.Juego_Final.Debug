@@ -1,10 +1,16 @@
+debug/enemigo.o
 debug/juego.o
 debug/main.o
 debug/MainWindow.o
 debug/Goku.o
 debug/Roca.o
+debug/obstaculo.o
 debug/personaje.o
+debug/proyectil.o
 debug/qrc_recursos.o
 debug/moc_MainWindow.o
+debug/moc_enemigo.o
 debug/moc_juego.o
+debug/moc_obstaculo.o
 debug/moc_personaje.o
+debug/moc_proyectil.o

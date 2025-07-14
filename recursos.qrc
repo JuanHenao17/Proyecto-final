@@ -8,9 +8,10 @@
         <file>imagenes/goku_corriendo.png</file>
         <file>imagenes/goku_corriendo_izq.png</file>
         <file>imagenes/goku_saltando.png</file>
-        <file>imagenes/barra_vida_roja.png</file>
-        <file>imagenes/marco_vida.png</file>
-        <file>imagenes/placa_tiempo.png</file>
+        <file>imagenes/disparos.png</file>
+        <file>imagenes/fondo_submarino.png</file>
+        <file>imagenes/enemigo.png</file>
+
     </qresource>
 
 

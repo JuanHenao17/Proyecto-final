@@ -35,6 +35,7 @@ private:
     bool moviendoIzq = false;
     bool moviendoDer = false;
     bool mirandoDerecha = true;
+    bool esOpaco() const;
 };
 
 #endif // GOKU_H

@@ -1,10 +1,16 @@
+release/enemigo.o
 release/juego.o
 release/main.o
 release/MainWindow.o
 release/Goku.o
 release/Roca.o
+release/obstaculo.o
 release/personaje.o
+release/proyectil.o
 release/qrc_recursos.o
 release/moc_MainWindow.o
+release/moc_enemigo.o
 release/moc_juego.o
+release/moc_obstaculo.o
 release/moc_personaje.o
+release/moc_proyectil.o
